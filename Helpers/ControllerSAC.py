@@ -1,4 +1,13 @@
 
+# =====================================================
+# 
+# ControllerSAC.py
+# Network structure and optimizer to run and train
+# a network.
+# 
+# =====================================================
+
+
 import torch
 import numpy as np 
 
@@ -67,7 +76,7 @@ class SoftQ_SAC(torch.nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
-
+# Get the mean and standard deviation from the policy network
 def get_action_array(policy : PolicySAC, hyperparameters : HyperparameterData, observation):
     with torch.no_grad():
         observation_tensor = torch.tensor(observation)

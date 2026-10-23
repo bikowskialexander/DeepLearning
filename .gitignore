@@ -1,2 +1,4 @@
+.env
 Runs/*
 *__pycache__
+*.mp4

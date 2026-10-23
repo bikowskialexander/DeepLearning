@@ -19,6 +19,10 @@ class Results:
         self.process = subprocess.Popen(["python3", "Helpers/ResultsBackend.py", trial_name],
                                         close_fds=True)
         
+        # Display Process
+        self.display_process = subprocess.Popen(["python3", "Helpers/DisplayImageBackend.py"],
+                                        close_fds=True)
+        
         self.runs_dir = "Runs/"
         self.run_dir = Path(self.runs_dir + trial_name)
         self.run_dir.mkdir()
@@ -65,7 +69,8 @@ class Results:
         self.socket.send_multipart([b'results', b'kill'])
         self.socket.send_multipart([b'images', b'kill'])
         time.sleep(10)
-        self.process.kill() 
+        self.process.kill()
+        self.display_process.kill() 
         self.socket.close()
 
 

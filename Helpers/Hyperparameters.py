@@ -1,4 +1,7 @@
 
+from dataclasses import dataclass, field, asdict
+import json 
+import torch 
 
 # Constants
 CPU = "cpu"
@@ -11,19 +14,29 @@ GAMMA = 0.99
 CAPACITY = 1000000
 TAU = 0.005
 
-class HyperparameterData:
-    def __init__(self, device=CPU):
-        self.lr = LR 
-        self.gamma = GAMMA 
-        self.buffer_size = CAPACITY
-        self.eps_start = EPS_START
-        self.eps_decay = EPS_DECAY
-        self.eps_end = EPS_END
-        self.batch_size = BATCH_SIZE
-        self.tau = TAU
-        self.device = device 
-        self.cpu = CPU
-        self.episodes_completed = 0
-        self.neurons = [8, 512, 4]
+@dataclass
+class HyperparameterData():
+    lr : float = LR 
+    gamma : float = GAMMA 
+    buffer_size : int = CAPACITY
+    eps_start : float = EPS_START
+    eps_decay : float = EPS_DECAY 
+    eps_end : float= EPS_END
+    batch_size : int = BATCH_SIZE 
+    tau : float = TAU 
+    device : torch.device = CPU
+    cpu : str = CPU 
+    episodes_completed : int = 0 
+    neurons : list = field(default_factory=list)
+
+    @classmethod
+    def load_from_json(cls, filename : str) :
+        with open(filename) as file:
+            data = json.load(file)
+            file.close()
+            return cls(**data)
+
+    def get_dict(self):
+        return asdict(self)
 
     

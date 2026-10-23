@@ -17,10 +17,9 @@ from Helpers.Hyperparameters import HyperparameterData
 
 env = gym.make('Pusher-v5', render_mode="human")
 
-hyperparameters = HyperparameterData()
-hyperparameters.neurons = [23, 256, 256, 7]
+hyperparameters = HyperparameterData.load_from_json("Runs/1792738068.020177/config.cfg")
 
-weights = torch.load("Runs/1792715096.2712007/Final.pt", weights_only=True)
+weights = torch.load("Runs/1792738068.020177/Final.pt", weights_only=True)
 actor = PolicySAC(hyperparameters)
 actor.load_state_dict(weights)
 

@@ -47,17 +47,7 @@ class Results:
 
     def save_config(self, data : HyperparameterData):
         file = open(str(self.run_dir) + "/config.cfg", "w")
-        saving = {}
-        saving['Learning_rate'] = data.lr
-        saving['Buffer_size'] = data.buffer_size
-        saving['Gamma'] = data.gamma 
-        saving['Batch_size'] = data.batch_size
-        saving['Tau'] = data.tau
-        saving['Eps_start'] = data.eps_start
-        saving['Eps_end'] = data.eps_end
-        saving['Eps_decay'] = data.eps_decay
-        saving['Neurons'] = data.neurons
-        saving['Completed_episodes'] = data.episodes_completed
+        saving = data.get_dict()
         json.dump(saving, file)
         file.close()
 

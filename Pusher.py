@@ -21,7 +21,7 @@ from Helpers.Memory import HyperparameterData
 
 from Helpers.ControllerSAC import soft_weight_update, hard_weight_update, optimizeSAC, get_action_array
 
-EPISODES = 4000
+EPISODES = 2000
 RENDER_MODE = "rgb_array"
 
 # Hyperparameters 

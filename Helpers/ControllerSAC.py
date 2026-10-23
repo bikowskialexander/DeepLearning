@@ -32,7 +32,7 @@ class PolicySAC(torch.nn.Module):
         torch.nn.init.uniform_(self.std_layer.bias, -0.0001, 0.0001)
 
     def forward(self, x):
-        x = x.to(self.device)
+        x = torch.tensor(x).to(self.device).float()
         logits = self.linear_relu_stack(x)
         mean = self.mean_layer(logits)
         std = self.std_layer(logits)

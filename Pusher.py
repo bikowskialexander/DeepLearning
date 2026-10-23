@@ -1,3 +1,13 @@
+
+# =====================================================
+# 
+# Pusher.py
+# Trains a actor to push the object into the circle 
+# using a robotic arm form MuJoCo and gym.
+# Soft Actor Critic is used for training.
+# 
+# =====================================================
+
 import gymnasium as gym
 import numpy as np
 import torch

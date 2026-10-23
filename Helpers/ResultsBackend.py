@@ -1,4 +1,14 @@
 
+# =====================================================
+#   
+# ResultsBackend.py
+# When run, it connects to the Results class running
+# on the main process. Creates a live graph to 
+# show the rewards vs episodes and randomness vs steps
+# taken. 
+#
+# =====================================================
+
 from pathlib import Path
 import json 
 import matplotlib.pyplot as plt
@@ -45,6 +55,8 @@ class ResultsBackend:
         
         self.ax.legend()
 
+    # Update the rewards graph
+    # Takes the episode (new_x) and rewards (new_y)
     def update_rewards(self, new_x, new_y):
         self.reward_xs.append(new_x)
         self.reward_ys.append(new_y)
@@ -64,6 +76,7 @@ class ResultsBackend:
         self.decay_line[0].set_data(self.decay_xs, self.decay_ys)
         self.ax_eps_decay.set_xlim(0, new_x)
 
+    # Draw the graph 
     def draw(self):
         self.fig.canvas.draw()
         self.fig.canvas.flush_events() 

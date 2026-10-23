@@ -25,3 +25,5 @@ class HyperparameterData:
         self.cpu = CPU
         self.episodes_completed = 0
         self.neurons = [8, 512, 4]
+
+    

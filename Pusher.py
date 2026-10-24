@@ -12,7 +12,6 @@ import gymnasium as gym
 import numpy as np
 import torch
 from tqdm import tqdm
-import math 
 
 from Helpers.ControllerSAC import SoftQ_SAC, PolicySAC
 from Helpers.Results import Results
@@ -142,7 +141,7 @@ try:
         # Store Results
         stored_results.update_decay(step_count, np.mean(stdevs))
         stored_results.update_rewards(episode, ongoing_reward)
-        
+
 except KeyboardInterrupt:
     pass 
 

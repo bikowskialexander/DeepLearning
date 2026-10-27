@@ -9,8 +9,9 @@ from Helpers.ControllerDQN import get_eps, soft_weight_update, hard_weight_updat
 
 
 class ActorDDPG(torch.nn.Module):
-    def __init__(self, hyperparameters : HyperparameterData):
+    def __init__(self, hyperparameters : HyperparameterData, result_multiplier=1.0):
         super().__init__() 
+        self.result_multiplier = result_multiplier
         self.device = hyperparameters.device
         sizes = hyperparameters.neurons.copy()
         self.flatten = torch.nn.Flatten()
@@ -24,11 +25,13 @@ class ActorDDPG(torch.nn.Module):
             torch.nn.Tanh()
 
         ).to(self.device)
+        torch.nn.init.uniform_(self.linear_relu_stack[4].weight, -0.003, 0.003)
+        torch.nn.init.uniform_(self.linear_relu_stack[4].bias, -0.003, 0.003)
 
     def forward(self, x):
         x = self.flatten(x).to(self.device)
         logits = self.linear_relu_stack(x)
-        return logits
+        return self.result_multiplier*logits
 
 class CriticDDPG(torch.nn.Module):
     def __init__(self, hyperparameters : HyperparameterData):
@@ -57,11 +60,11 @@ class CriticDDPG(torch.nn.Module):
 
 
 # Functions for array
-def get_action_array(controller : torch.nn, hyperparameters : HyperparameterData, observation, steps_done=None):
+def get_action_array(controller : torch.nn, hyperparameters : HyperparameterData, observation, steps_done=None, noise_range=1.0):
     rng = np.random.default_rng()
     noise_array = np.zeros((hyperparameters.neurons[-1]))
     if steps_done != None:
-        noise_array = rng.uniform(-1.0, 1.0, size=(noise_array.shape[0]))*get_eps(steps_done, hyperparameters)
+        noise_array = rng.normal(0, noise_range, size=(noise_array.shape[0]))
     tensor_observation = torch.from_numpy(observation.reshape((1, -1))).float()
     action_tensor = controller(tensor_observation)
     action_array = np.array(action_tensor.to(hyperparameters.cpu).detach().numpy())
@@ -81,8 +84,8 @@ def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor
     old_states = torch.tensor(np.array(sample[0])).to(device).float()
     action = torch.tensor(np.array(sample[1])).to(device).float()
     states = torch.tensor(np.array(sample[2])).to(device).float()
-    rewards = torch.tensor(sample[3]).to(device).float().unsqueeze(1)
-    dones = torch.tensor(sample[4], dtype=torch.bool).to(device).unsqueeze(1)
+    rewards = torch.tensor(np.array(sample[3])).to(device).float().view(-1, 1)
+    dones = torch.tensor(sample[4], dtype=torch.bool).to(device).view(-1, 1)
 
     with torch.no_grad():
         # Future rewards prediction
@@ -95,11 +98,12 @@ def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor
 
     # Current loss (For sampled moves)
     current_q = critic(old_states, action)
-    critic_loss = torch.nn.MSELoss()(current_q.float(), target_q.float())
+    critic_loss = torch.nn.SmoothL1Loss()(current_q.float(), target_q.float())
 
     # Adjust Critic 
     critic_optimizer.zero_grad()
     critic_loss.backward()
+    torch.nn.utils.clip_grad_norm_(critic.parameters(), 1.0)
     critic_optimizer.step()
 
     actor_loss = actor(old_states)

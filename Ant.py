@@ -13,7 +13,7 @@ from Helpers.Memory import HyperparameterData
 from Helpers.ControllerSAC import soft_weight_update, hard_weight_update, optimizeSAC, get_action_array
 
 # Episode Count
-EPISODES = 2000
+EPISODES = 5000
 
 # Render Mode
 # rgb_array should be used if also using live graphing.
@@ -25,6 +25,8 @@ RENDER_MODE = "rgb_array"
 hyperparameters = HyperparameterData()
 hyperparameters.neurons = [105, 256, 256, 8]
 hyperparameters.lr = 0.0003
+hyperparameters.buffer_size = 10000000
+hyperparameters.batch_size = 256
 hyperparameters.device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 
 
@@ -48,10 +50,21 @@ for i in range(2):
 alpha_optimizer = torch.optim.AdamW([log_of_alpha], lr=hyperparameters.lr)
 
 # Results 
-result_data = Results(EPISODES, y_range=6000)
+result_data = Results(EPISODES, y_range=100)
 
 # Replay
 replay_memory = Memory(hyperparameters)
+
+env = gym.make("Ant-v5", render_mode="")
+terminated = truncated = True
+for _ in tqdm(range(10000)):
+    if (terminated or truncated):
+       observation, _ = env.reset()
+    action = env.action_space.sample()
+    old_observation = observation
+    observation, reward, terminated, truncated, _ = env.step(action)
+    replay_memory.push(old_observation, action, observation, reward, terminated)
+
 
 env = gym.make("Ant-v5", render_mode=RENDER_MODE)
 
@@ -70,6 +83,7 @@ try:
                 stdev = stdev.cpu().detach().numpy()
             old_observation = observation
             observation, reward, terminated, truncated, info = env.step(action)
+            reward *= 0.01
             replay_memory.push(old_observation, action, observation, reward, terminated)
             optimizeSAC(replay_memory, hyperparameters, qs, qs_targets, policy, policy_optimizer, q_optimizers, log_of_alpha, alpha_optimizer)
             soft_weight_update(policy_target, policy, hyperparameters)
@@ -83,6 +97,9 @@ try:
 except KeyboardInterrupt:
     pass 
 
+result_data.save_model(policy, "Final.pt")
+result_data.save_config()
+result_data.save_result_graph()
 result_data.cleanup()
 
 

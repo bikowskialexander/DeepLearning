@@ -26,10 +26,9 @@ class ResultsBackend:
         plt.style.use("bmh")
         self.fig, ax_list = plt.subplots(1, 2)
         self.ax, self.ax_eps_decay = ax_list
-        self.ax.set_xlim(0, episodes)
         self.ax.set_ylim(-y_range, y_range)
-        self.ax.set_title("Reward vs Episodes")
-        self.ax.set_xlabel("Episodes")
+        self.ax.set_title("Reward")
+        self.ax.set_xlabel("Steps")
         self.ax.set_ylabel("Reward")
         self.ax.grid(True)
         self.reward_xs = []
@@ -39,19 +38,19 @@ class ResultsBackend:
         self.decay_xs = [] 
         self.decay_ys = []
         self.ax_eps_decay.set_ylim(0, 1.0)
-        self.ax_eps_decay.set_title("Decay vs Steps")
+        self.ax_eps_decay.set_title("Exploration Rate")
         self.ax_eps_decay.set_xlabel("Steps")
-        self.ax_eps_decay.set_ylabel("Decay")
+        self.ax_eps_decay.set_ylabel("Exploration Rate")
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
         # Scatter for rewards
-        self.scatter = self.ax.scatter(self.reward_xs, self.reward_ys, s=5, alpha=0.80, label="Reward")
+        self.scatter = self.ax.scatter(self.reward_xs, self.reward_ys, s=5, c='cornflowerblue', alpha=0.90, label="Reward")
 
         # Line for rewards average
-        self.line = self.ax.plot(self.average_reward_xs, self.average_reward_ys, color='r', label="Mean")
+        self.line = self.ax.plot(self.average_reward_xs, self.average_reward_ys, color='royalblue', label="Mean")
 
         # Line for decay
-        self.decay_line = self.ax_eps_decay.plot(self.decay_xs, self.decay_ys)
+        self.decay_line = self.ax_eps_decay.plot(self.decay_xs, self.decay_ys, c="orangered")
         
         self.ax.legend()
 
@@ -64,11 +63,14 @@ class ResultsBackend:
         self.scatter.set_offsets(offsets)
         self.average_reward_xs = []
         self.average_reward_ys = []
-        for x in range(50, len(self.reward_xs)):
-            self.average_reward_xs.append(x)
-            y = np.mean(self.reward_ys[x-50:x])
+        x_range = min(50, len(self.reward_xs))
+        for x_index in range(len(self.reward_xs)):
+            x_subrange = min(x_index, x_range)
+            self.average_reward_xs.append(np.mean(self.reward_xs[x_index-x_subrange:x_index]))
+            y = np.mean(self.reward_ys[x_index-x_subrange:x_index])
             self.average_reward_ys.append(y)
         self.line[0].set_data(self.average_reward_xs, self.average_reward_ys)
+        self.ax.set_xlim(0, np.max(self.reward_xs))
 
     def update_decay(self, new_x, new_y):
         self.decay_xs.append(new_x)

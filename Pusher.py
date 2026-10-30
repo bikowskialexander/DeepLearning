@@ -31,7 +31,7 @@ RENDER_MODE = "rgb_array"
 
 # Hyperparameters 
 hyperparameters = HyperparameterData()
-hyperparameters.neurons = [23, 256, 256, 7]
+hyperparameters.neurons = [23, 128, 128, 7]
 hyperparameters.batch_size = 256
 hyperparameters.lr = 0.0003
 hyperparameters.tau = 0.005 
@@ -57,7 +57,7 @@ actor_optimizer = torch.optim.AdamW(actor.parameters(), lr=hyperparameters.lr)
 critic_optimizer = torch.optim.AdamW(critic.parameters(), lr=hyperparameters.lr)
 
 # Store Results
-stored_results = Results(EPISODES, y_range=400)
+stored_results = Results(EPISODES, y_range=200)
 
 # =====================================================
 #       Fill the replay with some random examples
@@ -140,7 +140,7 @@ try:
 
         # Store Results
         stored_results.update_decay(step_count, np.mean(stdevs))
-        stored_results.update_rewards(episode, ongoing_reward)
+        stored_results.update_rewards(step_count, ongoing_reward)
 
 except KeyboardInterrupt:
     pass 

@@ -11,7 +11,8 @@ Video of the pusher trained using soft actor critic after 2,000 episodes. Videos
 
 ## Ant
 
+https://github.com/user-attachments/assets/4bf9dc69-7df7-4829-9af3-e24feed3f496
 
-Video of the Ant trained with soft actor critic, with an average reward above 4,000.
+Video of the Ant trained with soft actor critic. Video Generated using RecordAnt.py
 
 

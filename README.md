@@ -17,7 +17,7 @@ Video of the pusher trained using soft actor critic after 2,000 episodes. Videos
 
 ## Ant
 
-https://github.com/user-attachments/assets/0ce29659-535f-4384-88ea-66838daf252d
+https://github.com/user-attachments/assets/a8a60fa8-c0a5-4aa8-8908-2a6acc6491f5
 
 Video of the Ant trained with soft actor critic. Video Generated using RecordAnt.py.
 

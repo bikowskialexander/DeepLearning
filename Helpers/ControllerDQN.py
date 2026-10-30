@@ -84,7 +84,7 @@ def optimize(sample_memory : Memory, optimizer : torch.optim.AdamW, controller :
     tensor_observation = torch.from_numpy(state_samples.reshape((-1, 8))).float()
     state_values = controller.forward(tensor_observation).gather(1, action_sample).squeeze()
 
-    criterion = torch.nn.SmoothL1Loss()
+    criterion = torch.nn.MSELoss()
     loss = criterion(state_values, expected_state_action_values)
     optimizer.zero_grad()
     loss.backward()

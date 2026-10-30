@@ -1,4 +1,11 @@
 
+# =====================================================
+# 
+# ControllerDDPG.py
+# Actor, critic, and optimizer for DDPG.
+# 
+# =====================================================
+
 import torch 
 import numpy as np
 import random
@@ -9,9 +16,8 @@ from Helpers.ControllerDQN import get_eps, soft_weight_update, hard_weight_updat
 
 
 class ActorDDPG(torch.nn.Module):
-    def __init__(self, hyperparameters : HyperparameterData, result_multiplier=1.0):
+    def __init__(self, hyperparameters : HyperparameterData):
         super().__init__() 
-        self.result_multiplier = result_multiplier
         self.device = hyperparameters.device
         sizes = hyperparameters.neurons.copy()
         self.flatten = torch.nn.Flatten()
@@ -29,9 +35,14 @@ class ActorDDPG(torch.nn.Module):
         torch.nn.init.uniform_(self.linear_relu_stack[4].bias, -0.003, 0.003)
 
     def forward(self, x):
-        x = self.flatten(x).to(self.device)
+        if not isinstance(x, torch.Tensor):
+            x = torch.tensor(x)
+        x = x.to(self.device).float()
+        if len(x.shape) == 1:
+            x = x.unsqueeze(0)
+        x = self.flatten(x)
         logits = self.linear_relu_stack(x)
-        return self.result_multiplier*logits
+        return logits
 
 class CriticDDPG(torch.nn.Module):
     def __init__(self, hyperparameters : HyperparameterData):
@@ -71,7 +82,7 @@ def get_action_array(controller : torch.nn, hyperparameters : HyperparameterData
     action_array += noise_array
     return action_array
 
-def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor : ActorDDPG, actor_target : ActorDDPG, critic : CriticDDPG, critic_target : CriticDDPG,critic_optimizer, actor_optimizer):
+def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor : ActorDDPG, actor_target : ActorDDPG, critic : CriticDDPG, critic_target : CriticDDPG, critic_optimizer, actor_optimizer):
 
     batch_size = hyperparameters.batch_size
     if len(sample_memory.states) < batch_size:
@@ -84,8 +95,8 @@ def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor
     old_states = torch.tensor(np.array(sample[0])).to(device).float()
     action = torch.tensor(np.array(sample[1])).to(device).float()
     states = torch.tensor(np.array(sample[2])).to(device).float()
-    rewards = torch.tensor(np.array(sample[3])).to(device).float().view(-1, 1)
-    dones = torch.tensor(sample[4], dtype=torch.bool).to(device).view(-1, 1)
+    rewards = torch.tensor(sample[3]).to(device).float().unsqueeze(1)
+    dones = torch.tensor(sample[4], dtype=torch.bool).to(device).unsqueeze(1)
 
     with torch.no_grad():
         # Future rewards prediction
@@ -94,11 +105,11 @@ def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor
         critic_q[dones] = 0.0
 
         # bellman (future and present)
-        target_q = rewards + gamma*critic_q
+        target_q = rewards + gamma * critic_q
 
     # Current loss (For sampled moves)
     current_q = critic(old_states, action)
-    critic_loss = torch.nn.SmoothL1Loss()(current_q.float(), target_q.float())
+    critic_loss = torch.nn.MSELoss()(current_q.float(), target_q.float())
 
     # Adjust Critic 
     critic_optimizer.zero_grad()
@@ -106,12 +117,19 @@ def optimize(sample_memory : Memory, hyperparameters : HyperparameterData, actor
     torch.nn.utils.clip_grad_norm_(critic.parameters(), 1.0)
     critic_optimizer.step()
 
-    actor_loss = actor(old_states)
-    actor_loss = -critic(old_states, actor_loss).mean()
+    for param in critic.parameters():
+        param.requires_grad = False
+
+    predicted_action = actor(old_states)
+    actor_loss = -critic(old_states, predicted_action).mean()
 
     # Adjust Actor
     actor_optimizer.zero_grad()
     actor_loss.backward()
+    torch.nn.utils.clip_grad_norm_(actor.parameters(), 1.0)
     actor_optimizer.step()
+
+    for param in critic.parameters():
+        param.requires_grad = True
 
 
